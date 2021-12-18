@@ -183,16 +183,10 @@ def main(
     start = min(products[uuid]["beginposition"] for uuid in products.keys())
     end = max(products[uuid]["endposition"] for uuid in products.keys())
 
-    export_dir = PROCESSED_DIR / f"processed{producttype[2:]}"
-    makedirs(export_dir, exist_ok=True)
-    file_export_name = export_dir / (
-        f"{producttype[4:]}{start.day}-{start.month}-{start.year}__"
-        f"{end.day}-{end.month}-{end.year}.nc"
-    )
-
-    DS.to_netcdf(file_export_name)
+    
 
     tqdm.write("Done!")
+    return DS
 
 
 if __name__ == '__main__':
@@ -282,7 +276,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(
+    DS = main(
         producttype=args.product,
         aoi=args.aoi,
         date=args.date,
@@ -293,3 +287,11 @@ if __name__ == '__main__':
         num_threads=args.num_threads,
         num_workers=args.num_workers,
     )
+    export_dir = PROCESSED_DIR / f"processed{producttype[2:]}"
+    makedirs(export_dir, exist_ok=True)
+    file_export_name = export_dir / (
+        f"{producttype[4:]}{start.day}-{start.month}-{start.year}__"
+        f"{end.day}-{end.month}-{end.year}.nc"
+    )
+    
+    DS.to_netcdf(file_export_name)
