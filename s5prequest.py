@@ -31,15 +31,15 @@ from s5p_tools import (
 
 
 def main(
-    producttype,
-    aoi,
-    date,
-    qa,
-    unit,
-    resolution,
-    chunk_size,
-    num_threads,
-    num_workers,
+    producttype="L2__NO2___",
+    aoi="nl.geojson",
+    date=("NOW-24HOURS","NOW"),
+    qa=50,
+    unit="mol/m2",
+    resolution=(0.1,0.1),
+    chunk_size=256,
+    num_threads=4,
+    num_workers=cpu_count(),
 ):
 
     api = SentinelAPI(DHUS_USER, DHUS_PASSWORD, DHUS_URL)
@@ -184,6 +184,14 @@ def main(
     end = max(products[uuid]["endposition"] for uuid in products.keys())
 
     
+    export_dir = PROCESSED_DIR / f"processed{producttype[2:]}"
+    makedirs(export_dir, exist_ok=True)
+    file_export_name = export_dir / (
+        f"{producttype[4:]}{start.day}-{start.month}-{start.year}__"
+        f"{end.day}-{end.month}-{end.year}.nc"
+    )
+    
+    DS.to_netcdf(file_export_name)
 
     tqdm.write("Done!")
     return DS
@@ -276,7 +284,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    DS = main(
+    main(
         producttype=args.product,
         aoi=args.aoi,
         date=args.date,
@@ -287,11 +295,3 @@ if __name__ == '__main__':
         num_threads=args.num_threads,
         num_workers=args.num_workers,
     )
-    export_dir = PROCESSED_DIR / f"processed{producttype[2:]}"
-    makedirs(export_dir, exist_ok=True)
-    file_export_name = export_dir / (
-        f"{producttype[4:]}{start.day}-{start.month}-{start.year}__"
-        f"{end.day}-{end.month}-{end.year}.nc"
-    )
-    
-    DS.to_netcdf(file_export_name)
