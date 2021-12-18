@@ -14,7 +14,7 @@ if __name__=="__main__":
     args = parser.parse_args()
     rasterpath = Path(args.raster)
 else:
-    rasterpath = Path("L3_data\\S5P_NRTI_L3__NO2____20211217T114745_20211217T115245_21651_02_020301_20211217T131229.nc")
+    rasterpath = Path("L3_data\\S5P_NRTI_L3__NO2____20211218T112745_20211218T113245_21665_02_020301_20211218T124629.nc")
 
 data = xr.open_dataset(rasterpath) #.resample(time='1D').mean(dim='time')
 #tncnd = data['tropospheric_NO2_column_number_density']
