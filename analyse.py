@@ -38,17 +38,17 @@ if __name__ == '__main__': # main
     
     #clipped.to_netcdf('clipped.nc')
     # Neem alle waardes behalve die die gelijk zijn aan de constante
-    whered = clipped.where(xds<1e+30)
+    whered = clipped.where(clipped<1e+30)
     
     # Waardes om op te slaan:
     # Gemiddeldes
     meaned = whered.mean()
-    cloudfrac = meaned['cloud_fraction']
-    no2 = meaned['tropospheric_NO2_column_number_density']
+    cloudfrac = float(meaned['cloud_fraction'])
+    no2 = float(meaned['tropospheric_NO2_column_number_density'])
     # Aantal vakjes binnen het land
-    counted = whered.count()
+    counted = int(whered.count()['cloud_fraction'])
     # Aantal vakjes totaal
-    origcounted = clipped.count()
+    origcounted = int(clipped.count()['cloud_fraction'])
     # Tijdstip klaar met analyse, i.e. nu
     timeanalysisdone = datetime.datetime.now().isoformat()
     # Naam van het satellietdatabestand (met meetdatum erin)
