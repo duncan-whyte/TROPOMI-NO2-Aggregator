@@ -8,24 +8,55 @@ import s5prequest as s5pr
 from os import cpu_count
 import rioxarray
 import geopandas
+from shapely.geometry import mapping
+import datetime
 
 xr.set_options(keep_attrs=True)
 
-#if __name__=="__main__":
-#    parser = argparse.ArgumentParser(description="Nvm")
-#    parser.add_argument("raster", help="path to the a raster tif file", type=str)
-#    args = parser.parse_args()
-#    rasterpath = Path(args.raster)
-#else:
-#    rasterpath = Path("L3_data\\S5P_NRTI_L3__NO2____20211218T112745_20211218T113245_21665_02_020301_20211218T124629.nc")
-
-if __name__ == '__main__':
+if __name__ == '__main__': # main
+    
+    # Neem input
     
     parser = argparse.ArgumentParser(description="Analyse")
     
-    parser.add_argument("filename", help="File name", type=str)
+    # .nc met de satellietdata
+    parser.add_argument("raster", help="Satellite data file", type=str)
+    # .shp met de grenzen van het land
+    parser.add_argument("shapefile", help="Topographic shape file", type=str)
     
-    geodf = geopandas.read_file()
+    args = parser.parse_args()
     
-    value = data.mean(dim='longitude').mean(dim='latitude'))
-    print(value)
+    # Laad topografie met de EPSG:4326 standaard (coordinaten)
+    geodf = geopandas.read_file(args.shapefile, crs="EPSG:4326")
+    # Laad satellietdata, neem gemiddelde over tijd (band) en kijk alleen naar wolken & tropo NO2
+    # Als het goed is, is er maar een meting per bestand dus doet het middelen over tijd (band) niets behalve die dimensie wegwerken
+    xds = rioxarray.open_rasterio(args.raster).mean(dim='band')[['cloud_fraction', 'tropospheric_NO2_column_number_density']]
+    #print(xds)
+    # Neem alleen de waardes binnen het land, de rest wordt een bepaalde constante >10^30
+    clipped = xds.rio.write_crs('EPSG:4326').rio.clip(geodf.geometry.apply(mapping), geodf.crs, drop=False, invert=True)
+    #print(clipped)
+    
+    #clipped.to_netcdf('clipped.nc')
+    # Neem alle waardes behalve die die gelijk zijn aan de constante
+    whered = clipped.where(xds<1e+30)
+    
+    # Waardes om op te slaan:
+    # Gemiddeldes
+    meaned = whered.mean()
+    cloudfrac = meaned['cloud_fraction']
+    no2 = meaned['tropospheric_NO2_column_number_density']
+    # Aantal vakjes binnen het land
+    counted = whered.count()
+    # Aantal vakjes totaal
+    origcounted = clipped.count()
+    # Tijdstip klaar met analyse, i.e. nu
+    timeanalysisdone = datetime.datetime.now().isoformat()
+    # Naam van het satellietdatabestand (met meetdatum erin)
+    rastername = args.raster
+    # Naam van het topografiebestand (met landnaam erin)
+    shapefilename = args.shapefile
+    
+    print(rastername,shapefilename,timeanalysisdone,counted,origcounted,cloudfrac,no2)
+    with open('analysis.csv','a') as f:
+        f.write(f'{rastername},{shapefilename},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2}\n')
+    
