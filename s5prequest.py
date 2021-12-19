@@ -97,6 +97,37 @@ def main(
 
         pool.close()
         pool.join()
+    print(products)
+    convertL3(
+        producttype,
+        aoi,
+        date,
+        qa,
+        unit,
+        resolution,
+        chunk_size,
+        num_threads,
+        num_workers,
+        filenames,
+        
+        min(products[uuid]["beginposition"] for uuid in products.keys())
+        max(products[uuid]["endposition"] for uuid in products.keys())
+    )
+
+def convertL3(
+    producttype="L2__NO2___",
+    aoi="nl.geojson",
+    date=("NOW-24HOURS","NOW"),
+    qa=50,
+    unit="mol/m2",
+    resolution=(0.1,0.1),
+    chunk_size=256,
+    num_threads=4,
+    num_workers=cpu_count(),
+    filenames=None,
+    start="START",
+    end="END"
+    ):
 
     tqdm.write("Converting into L3 products\n")
 
@@ -180,8 +211,6 @@ def main(
 
     tqdm.write("Exporting netCDF file\n")
 
-    start = min(products[uuid]["beginposition"] for uuid in products.keys())
-    end = max(products[uuid]["endposition"] for uuid in products.keys())
 
     
     export_dir = PROCESSED_DIR / f"processed{producttype[2:]}"
