@@ -106,7 +106,6 @@ def main(
         DOWNLOAD_DIR / f"{products[file_id]['title']}.nc"
         for file_id in ids_request if fetch_product(file_id, api, products, download_dir=DOWNLOAD_DIR, skip=skip)
     ]
-    print(products)
     convertL3(
         producttype,
         aoi,
