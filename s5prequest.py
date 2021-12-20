@@ -37,7 +37,6 @@ def main(
     qa=50,
     unit="mol/m2",
     resolution=(0.1,0.1),
-    chunk_size=256,
     num_threads=4,
     num_workers=cpu_count(),
     links=False,
@@ -113,13 +112,9 @@ def main(
         qa,
         unit,
         resolution,
-        chunk_size,
         num_threads,
         num_workers,
-        filenames,
-        
-        min(products[uuid]["beginposition"] for uuid in products.keys()),
-        max(products[uuid]["endposition"] for uuid in products.keys())
+        filenames
     )
 
 def convertL3(
@@ -129,7 +124,6 @@ def convertL3(
     qa=50,
     unit="mol/m2",
     resolution=(0.1,0.1),
-    chunk_size=256,
     num_threads=4,
     num_workers=cpu_count(),
     filenames=None,
@@ -190,65 +184,21 @@ def convertL3(
         try:
             process_file(f, harp_commands, export_dir=EXPORT_DIR)
             donefiles.append(f)
-        except:
+        except Exception as e:
+            print(e)
             sys.stderr.write(f'Error in {str(f)}\n')
             continue
-    # Recover attributes
-    attributes = {
-        filename.name: {
-            "time_coverage_start": xr.open_dataset(filename).attrs["time_coverage_start"],
-            "time_coverage_end": xr.open_dataset(filename).attrs["time_coverage_end"],
-        }
-        for filename in donefiles
-    }
+    #processL3(donefiles, producttype, chunk_size)
+    tqdm.write('\n\n\nFilenames:\n')
+    tqdm.write(' '.join([str(x) for x in donefiles])+'\n')
 
-    tqdm.write("Processing data\n")
-    xr.set_options(keep_attrs=True)
-
-    DS = xr.open_mfdataset(
-        [
-            str(filename.relative_to(".")).replace("L2", "L3")
-            for filename in donefiles
-            if exists(str(filename.relative_to(".")).replace("L2", "L3"))
-        ],
-        combine="nested",
-        concat_dim="time",
-        parallel=True,
-        preprocess=partial(
-            preprocess_time,
-            attributes=attributes
-            ),
-        decode_times=False,
-        chunks={"time": chunk_size},
-    )[['cloud_fraction', 'tropospheric_NO2_column_number_density']]
-
-    DS = DS.sortby("time")
-    DS.rio.write_crs("epsg:4326", inplace=True)
-    DS.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
-
-    tqdm.write("Exporting netCDF file\n")
-
-
-    
-    export_dir = PROCESSED_DIR / f"processed{producttype[2:]}"
-    makedirs(export_dir, exist_ok=True)
-    file_export_name = export_dir / (
-        f"{producttype[4:]}{start.day}-{start.month}-{start.year}__"
-        f"{end.day}-{end.month}-{end.year}.nc"
-    )
-    
-    DS.to_netcdf(file_export_name)
-
-    tqdm.write("Done!")
-    return DS
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         description=(
-            "Request, download and process Sentinel data from Copernicus access hub. "
-            "Create a processed netCDF file binned by time, latitude and longitude"
+            "Request and download Sentinel data from Copernicus access hub. "
         )
     )
 
@@ -262,7 +212,7 @@ if __name__ == '__main__':
     #   L2__HCHO__
     #   L2__AER_AI
     #   L2__CLOUD_
-    parser.add_argument("product", help="Product type", type=str)
+    parser.add_argument("--product", "-p", help="product type", type=str, default="L2__NO2___")
 
     # Date: Used to perform a time interval search
     # The general form to be used is:
@@ -277,7 +227,7 @@ if __name__ == '__main__':
     #   NOW-<n>DAY(S)
     #   NOW-<n>MONTH(S)
     parser.add_argument(
-        "--date",
+        "--date", "-d",
         help="date used to perform a time interval search",
         nargs=2,
         type=str,
@@ -285,42 +235,34 @@ if __name__ == '__main__':
     )
     
     parser.add_argument(
-        "--links",
+        "--links", "-l",
         help="only print links",
         action='store_true'
     )
     parser.add_argument(
-        "--skip",
+        "--skip", "-s",
         help="skip download",
         action='store_true'
     )
 
     # Area of interest: The url of the area of interest (.geojson)
     parser.add_argument(
-        "--aoi", help="path to the area of interest (.geojson)", type=str
+        "aoi", help="Path to the area of interest (.geojson)", type=str
     )
 
     # Unit: Unit conversion
-    parser.add_argument("--unit", help="unit conversion", type=str, default="mol/m2")
+    parser.add_argument("--unit", "-u", help="unit conversion", type=str, default="mol/m2")
 
     # qa value: Quality value threshold
-    parser.add_argument("--qa", help="quality value threshold", type=int, default=50)
+    parser.add_argument("--qa", "-q", help="quality value threshold", type=int, default=50)
 
     # resolution: Spatial resolution in arc degrees
     parser.add_argument(
-        "--resolution",
+        "--resolution", "-r",
         help="spatial resolution in arc degrees",
         nargs=2,
         type=float,
-        default=(0.01, 0.01),
-    )
-
-    # chunk-size:
-    parser.add_argument(
-        "--chunk-size",
-        help="dask chunk size along the time dimension",
-        type=int,
-        default=256,
+        default=(0.1, 0.1),
     )
 
     # num-threads:
@@ -348,7 +290,6 @@ if __name__ == '__main__':
         qa=args.qa,
         unit=args.unit,
         resolution=args.resolution,
-        chunk_size=args.chunk_size,
         num_threads=args.num_threads,
         num_workers=args.num_workers,
         links=args.links,
