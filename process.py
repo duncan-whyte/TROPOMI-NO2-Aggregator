@@ -73,7 +73,6 @@ def processL3(filenames, chunk_size):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(
         description=(
             "Request, download and process Sentinel data from Copernicus access hub. "
@@ -97,5 +96,4 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     #print(len(args.filenames))
-    
     processL3([Path(x) for x in args.filenames], args.chunk_size)
