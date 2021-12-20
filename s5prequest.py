@@ -40,7 +40,8 @@ def main(
     chunk_size=256,
     num_threads=4,
     num_workers=cpu_count(),
-    links=False
+    links=False,
+    skip=False
 ):
 
     api = SentinelAPI(DHUS_USER, DHUS_PASSWORD, DHUS_URL)
@@ -84,25 +85,27 @@ def main(
         return
 
     # list of downloaded filenames urls
-    filenames = [
-        DOWNLOAD_DIR / f"{products[file_id]['title']}.nc"
-        for file_id in ids_request
-    ]
 
     makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-    with ThreadPool(num_threads) as pool:
-        pool.map(
-            partial(
-                fetch_product,
-                api=api,
-                products=products,
-                download_dir=DOWNLOAD_DIR
-            ),
-            ids_request)
-
-        pool.close()
-        pool.join()
+    #with ThreadPool(num_threads) as pool:
+    #    pool.map(
+    #        partial(
+    #            fetch_product,
+    #            api=api,
+    #            products=products,
+    #            download_dir=DOWNLOAD_DIR,
+    #            skip=skip
+    #        ),
+    #        ids_request)
+    #
+    #    pool.close()
+    #    pool.join()
+    
+    filenames = [
+        DOWNLOAD_DIR / f"{products[file_id]['title']}.nc"
+        for file_id in ids_request if fetch_product(file_id, api, products, download_dir=DOWNLOAD_DIR, skip=skip)
+    ]
     print(products)
     convertL3(
         producttype,
@@ -163,7 +166,7 @@ def convertL3(
     makedirs(EXPORT_DIR, exist_ok=True)
     tqdm.write(f"Launched {num_workers} processes")
 
-    with Pool(processes=num_workers) as pool:
+    """with Pool(processes=num_workers) as pool:
         list(
             tqdm(
                 pool.imap_unordered(
@@ -181,14 +184,23 @@ def convertL3(
         )
         pool.close()
         pool.join()
-
+    """
+    donefiles = []
+    for f in filenames:
+        tqdm.write(str(f))
+        try:
+            process_file(f, harp_commands, export_dir=EXPORT_DIR)
+            donefiles.append(f)
+        except:
+            sys.stderr.write(f'Error in {str(f)}\n')
+            continue
     # Recover attributes
     attributes = {
         filename.name: {
             "time_coverage_start": xr.open_dataset(filename).attrs["time_coverage_start"],
             "time_coverage_end": xr.open_dataset(filename).attrs["time_coverage_end"],
         }
-        for filename in filenames
+        for filename in donefiles
     }
 
     tqdm.write("Processing data\n")
@@ -197,7 +209,7 @@ def convertL3(
     DS = xr.open_mfdataset(
         [
             str(filename.relative_to(".")).replace("L2", "L3")
-            for filename in filenames
+            for filename in donefiles
             if exists(str(filename.relative_to(".")).replace("L2", "L3"))
         ],
         combine="nested",
@@ -278,6 +290,11 @@ if __name__ == '__main__':
         help="only print links",
         action='store_true'
     )
+    parser.add_argument(
+        "--skip",
+        help="skip download",
+        action='store_true'
+    )
 
     # Area of interest: The url of the area of interest (.geojson)
     parser.add_argument(
@@ -335,5 +352,6 @@ if __name__ == '__main__':
         chunk_size=args.chunk_size,
         num_threads=args.num_threads,
         num_workers=args.num_workers,
-        links=args.links
+        links=args.links,
+        skip=args.skip
     )

@@ -57,6 +57,7 @@ if __name__ == '__main__': # main
     shapefilename = args.shapefile
     
     print(rastername,shapefilename,timeanalysisdone,counted,origcounted,cloudfrac,no2)
+    #f.write("rastername,shapefilename,timeanalysisdone,counted,origcounted,cloudfrac,no2\n")
     with open('analysis.csv','a') as f:
         f.write(f'{rastername},{shapefilename},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2}\n')
     

@@ -19,11 +19,15 @@ def compute_lengths_and_offsets(minx, miny, maxx, maxy, ystep, xstep):
     return lat_edge_length, lat_edge_offset, lon_edge_length, lon_edge_offset
 
 
-def fetch_product(file_id, api, products, download_dir):
+def fetch_product(file_id, api, products, download_dir, skip=False):
 
     if not exists(download_dir / f"{products[file_id]['title']}.nc"):
-
-        tqdm.write(f"File {file_id} not found. Downloading into {download_dir}")
+        
+        tqdm.write(f"File {file_id} not found.")
+        if skip:
+            tqdm.write("Skipping.")
+            return False
+        tqdm.write(f"Downloading into {download_dir}")
 
         try:
             api.get_product_odata(file_id)
@@ -48,6 +52,7 @@ def fetch_product(file_id, api, products, download_dir):
                     break
     else:
         tqdm.write(f"File {file_id} already exists")
+    return True
 
 
 def process_file(filename, harp_commands, export_dir):
