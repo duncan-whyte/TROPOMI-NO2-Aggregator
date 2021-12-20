@@ -221,7 +221,7 @@ def convertL3(
             ),
         decode_times=False,
         chunks={"time": chunk_size},
-    )
+    )[['cloud_fraction', 'tropospheric_NO2_column_number_density']]
 
     DS = DS.sortby("time")
     DS.rio.write_crs("epsg:4326", inplace=True)
