@@ -58,7 +58,8 @@ def fetch_product(file_id, api, products, download_dir, skip=False):
 def process_file(filename, harp_commands, export_dir):
 
     # write does not work until https://github.com/tqdm/tqdm/issues/680 is solved
-    if not exists(export_dir / filename.name.replace("L2", "L3")):
+    export_url = export_dir / filename.name.replace("L2", "L3")
+    if not exists(export_url):
 
         # tqdm.write(f"Converting {filename}")
         if exists(filename):
@@ -66,7 +67,6 @@ def process_file(filename, harp_commands, export_dir):
                 output_product = harp.import_product(
                     str(filename), operations=harp_commands
                 )
-                export_url = export_dir / f"{filename.stem.replace('L2', 'L3')}.nc"
                 harp.export_product(
                     output_product,
                     str(export_url),
@@ -221,7 +221,6 @@ def generate_harp_commands(producttype,
             "convert": [],
         },
     }
-
     return (
         ";".join(harp_dict[producttype]["filter"])
         + (";" if len(harp_dict[producttype]["filter"]) != 0 else "")

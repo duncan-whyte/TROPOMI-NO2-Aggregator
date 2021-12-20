@@ -14,6 +14,7 @@ from sentinelsat.sentinel import (
 import sys
 from tqdm import tqdm
 import xarray as xr
+import netCDF4 as nc
 
 from s5p_tools import (
     compute_lengths_and_offsets,
@@ -26,7 +27,8 @@ from s5p_tools import (
     DHUS_URL,
     DOWNLOAD_DIR,
     EXPORT_DIR,
-    PROCESSED_DIR
+    PROCESSED_DIR,
+    HARPED_DIR
 )
 
 
@@ -126,9 +128,7 @@ def convertL3(
     resolution=(0.1,0.1),
     num_threads=4,
     num_workers=cpu_count(),
-    filenames=None,
-    start="START",
-    end="END"
+    filenames=[]
     ):
 
     tqdm.write("Converting into L3 products\n")
@@ -157,9 +157,12 @@ def convertL3(
     )
 
     makedirs(EXPORT_DIR, exist_ok=True)
-    tqdm.write(f"Launched {num_workers} processes")
+    makedirs(HARPED_DIR, exist_ok=True)
+    
 
-    """with Pool(processes=num_workers) as pool:
+    """
+    tqdm.write(f"Launched {num_workers} processes")
+    with Pool(processes=num_workers) as pool:
         list(
             tqdm(
                 pool.imap_unordered(
@@ -182,16 +185,33 @@ def convertL3(
     for f in filenames:
         tqdm.write(str(f))
         try:
-            process_file(f, harp_commands, export_dir=EXPORT_DIR)
+            export_url = process_file(f, harp_commands, export_dir=HARPED_DIR)
             donefiles.append(f)
         except Exception as e:
             print(e)
+            #raise e
             sys.stderr.write(f'Error in {str(f)}\n')
             continue
     #processL3(donefiles, producttype, chunk_size)
+    
+    #for f in donefiles:
+    #    str(filename.relative_to(".")).replace("L2", "L3")
+    
+    for f in donefiles:
+        xds = xr.open_dataset(f)
+        attrs = {
+            "time_coverage_start": xds.attrs["time_coverage_start"],
+            "time_coverage_end": xds.attrs["time_coverage_end"],
+        }
+        xds.close()
+        xds = xr.open_dataset(HARPED_DIR / f.name.replace("L2", "L3"))
+        xds.attrs.update(attrs)
+        xds.close()
+        xds.to_netcdf(EXPORT_DIR / f.name.replace("L2", "L3"))
+    
     tqdm.write('\n\n\nFilenames:\n')
     tqdm.write(' '.join([str(x) for x in donefiles])+'\n')
-
+    # todo delete donefiles irl
 
 
 if __name__ == '__main__':

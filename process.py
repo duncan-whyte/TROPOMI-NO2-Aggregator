@@ -23,14 +23,14 @@ from s5p_tools import (
 
 def processL3(filenames, chunk_size):
     # Recover attributes
+    print(filenames[0])
     attributes = {
-        filename.name: {
+        str(filename.name).replace("L3","L2"): {
             "time_coverage_start": xr.open_dataset(filename).attrs["time_coverage_start"],
             "time_coverage_end": xr.open_dataset(filename).attrs["time_coverage_end"],
         }
         for filename in filenames
     }
-
     tqdm.write("Processing data\n")
     xr.set_options(keep_attrs=True)
 
@@ -49,14 +49,12 @@ def processL3(filenames, chunk_size):
             ),
         decode_times=False,
         chunks={"time": chunk_size},
-    )[['cloud_fraction', 'tropospheric_NO2_column_number_density']]
-
+    )[['cloud_fraction', 'tropospheric_NO2_column_number_density']] # todo remove
     DS = DS.sortby("time")
     DS.rio.write_crs("epsg:4326", inplace=True)
     DS.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
 
     tqdm.write("Exporting netCDF file\n")
-
     start = datetime.datetime.fromtimestamp(min(DS['time']).item()//1e9)
     end = datetime.datetime.fromtimestamp(max(DS['time']).item()//1e9)
     
@@ -68,7 +66,7 @@ def processL3(filenames, chunk_size):
     
     DS.to_netcdf(file_export_name)
 
-    tqdm.write("Done!")
+    print("Done!")
     return DS
 
 
@@ -96,4 +94,4 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     #print(len(args.filenames))
-    processL3([Path(x) for x in args.filenames], args.chunk_size)
+    processL3([Path(x[62:]) for x in args.filenames], args.chunk_size)
