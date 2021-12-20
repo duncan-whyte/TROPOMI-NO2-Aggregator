@@ -40,6 +40,7 @@ def main(
     chunk_size=256,
     num_threads=4,
     num_workers=cpu_count(),
+    links=False
 ):
 
     api = SentinelAPI(DHUS_USER, DHUS_PASSWORD, DHUS_URL)
@@ -69,13 +70,18 @@ def main(
             size=api.get_products_size(products)
             )
     )
+    for uuid in products.keys():
+        tqdm.write(products[uuid]["link"])
+    if links:
+        return
+    
 
     # list of uuids for each product in the query
     ids_request = list(products.keys())
 
     if len(ids_request) == 0:
         tqdm.write("Done!")
-        sys.exit(0)
+        return
 
     # list of downloaded filenames urls
     filenames = [
@@ -110,7 +116,7 @@ def main(
         num_workers,
         filenames,
         
-        min(products[uuid]["beginposition"] for uuid in products.keys())
+        min(products[uuid]["beginposition"] for uuid in products.keys()),
         max(products[uuid]["endposition"] for uuid in products.keys())
     )
 
@@ -266,6 +272,12 @@ if __name__ == '__main__':
         type=str,
         default=("NOW-24HOURS", "NOW"),
     )
+    
+    parser.add_argument(
+        "--links",
+        help="only print links",
+        action='store_true'
+    )
 
     # Area of interest: The url of the area of interest (.geojson)
     parser.add_argument(
@@ -323,4 +335,5 @@ if __name__ == '__main__':
         chunk_size=args.chunk_size,
         num_threads=args.num_threads,
         num_workers=args.num_workers,
+        links=args.links
     )
