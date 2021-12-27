@@ -2,3 +2,4 @@
 *.nc
 __pycache__/analyse.cpython-310.pyc
 *.incomplete
+*.csv#
