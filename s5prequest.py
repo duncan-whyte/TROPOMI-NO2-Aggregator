@@ -15,6 +15,7 @@ import sys
 from tqdm import tqdm
 import xarray as xr
 import netCDF4 as nc
+import urllib.parse
 
 from s5p_tools import (
     compute_lengths_and_offsets,
@@ -73,7 +74,7 @@ def main(
             )
     )
     for uuid in products.keys():
-        tqdm.write(products[uuid]["link"])
+        tqdm.write(products[uuid]["link"].replace("'",'%27'))
     if links:
         return
     

@@ -24,13 +24,14 @@ from s5p_tools import (
 def processL3(filenames, chunk_size):
     # Recover attributes
     print(filenames[0])
-    attributes = {
-        str(filename.name).replace("L3","L2"): {
-            "time_coverage_start": xr.open_dataset(filename).attrs["time_coverage_start"],
-            "time_coverage_end": xr.open_dataset(filename).attrs["time_coverage_end"],
+    attributes = {}
+    for filename in filenames:
+        rxds=rioxarray.open_rasterio(filename)
+        attributes[str(filename.name).replace("L3","L2")] = {
+            "time_coverage_start": rxds.attrs["time_coverage_start"],
+            "time_coverage_end": rxds.attrs["time_coverage_end"],
         }
-        for filename in filenames
-    }
+        rxds.close()
     tqdm.write("Processing data\n")
     xr.set_options(keep_attrs=True)
 
@@ -94,4 +95,4 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     #print(len(args.filenames))
-    processL3([Path(x[62:]) for x in args.filenames], args.chunk_size)
+    processL3([Path(x) for x in args.filenames], args.chunk_size)

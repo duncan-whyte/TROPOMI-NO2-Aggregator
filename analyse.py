@@ -12,6 +12,7 @@ from shapely.geometry import mapping
 import datetime
 
 xr.set_options(keep_attrs=True)
+rioxarray.set_options(export_grid_mapping=False)
 
 if __name__ == '__main__': # main
     
@@ -29,12 +30,14 @@ if __name__ == '__main__': # main
     # Laad topografie met de EPSG:4326 standaard (coordinaten)
     geodf = geopandas.read_file(args.shapefile, crs="EPSG:4326")
     # Laad satellietdata
-    xds = rioxarray.open_rasterio(args.raster)
+    xds = rioxarray.open_rasterio(args.raster).rio.write_crs('EPSG:4326')
     #print(xds)
+    print('Clipping...')
+    geomap = geodf.geometry.apply(mapping)
     # Neem alleen de waardes binnen het land, de rest wordt een bepaalde constante >10^30
-    clipped = xds.rio.write_crs('EPSG:4326').rio.clip(geodf.geometry.apply(mapping), geodf.crs, drop=False, invert=True)
+    clipped = xds.rio.clip(geomap, geodf.crs, from_disk=True)
     #print(clipped)
-    
+    print('Clipped')
     #clipped.to_netcdf('clipped.nc')
     
     for t in range(clipped['time'].size):
