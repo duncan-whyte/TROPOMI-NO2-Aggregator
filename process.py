@@ -62,7 +62,7 @@ def processL3(filenames, chunk_size):
     makedirs(PROCESSED_DIR, exist_ok=True)
     file_export_name = PROCESSED_DIR / (
         f"{start.day}-{start.month}-{start.year}__"
-        f"{end.day}-{end.month}-{end.year}.nc"
+        f"{end.day}-{end.month}-{end.year}__{filenames[0].name[:-3]}.nc"
     )
     
     DS.to_netcdf(file_export_name)
