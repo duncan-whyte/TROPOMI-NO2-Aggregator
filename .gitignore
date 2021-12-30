@@ -4,3 +4,4 @@ __pycache__/analyse.cpython-310.pyc
 *.incomplete
 *.csv#
 *.part
+*.crdownload
