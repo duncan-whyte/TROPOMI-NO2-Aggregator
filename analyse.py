@@ -85,8 +85,8 @@ if __name__ == '__main__': # main
                 f.write(f'{rastername},{shapefilename},{creation},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2}\n')
     else:
         whered = clipped['tropospheric_NO2_column_number_density'].where(clipped['tropospheric_NO2_column_number_density']<1e+30)
-        starttime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_start']*60*60*24+915235200).isoformat()
-        stoptime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_stop']*60*60*24+915235200).isoformat()
+        starttime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_start']*60*60*24+946684800).isoformat()
+        stoptime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_stop']*60*60*24+946684800).isoformat()
         no2 = whered.mean().item()
         rastername = args.raster
         shapefilename = args.shapefile
