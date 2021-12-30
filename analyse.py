@@ -24,6 +24,17 @@ if __name__ == '__main__': # main
     parser.add_argument("raster", help="Satellite data file", type=str)
     # .shp met de grenzen van het land
     parser.add_argument("shapefile", help="Topographic shape file", type=str)
+    parser.add_argument(
+        "--output", "-o",
+        help="save clipped to file",
+        type=str,
+        default="",
+    )
+    parser.add_argument(
+        "--single", "-s",
+        help="single fortnight",
+        action='store_true'
+    )
     
     args = parser.parse_args()
     
@@ -32,6 +43,9 @@ if __name__ == '__main__': # main
     # Laad satellietdata
     xds = rioxarray.open_rasterio(args.raster).rio.write_crs('EPSG:4326')
     #print(xds)
+    if 'datetime_start' in xds.attrs.keys():
+        print('Overruling arguments, adding -s')
+        args.single = True
     print('Clipping...')
     geomap = geodf.geometry.apply(mapping)
     # Neem alleen de waardes binnen het land, de rest wordt een bepaalde constante >10^30
@@ -39,32 +53,44 @@ if __name__ == '__main__': # main
     #print(clipped)
     print('Clipped')
     #clipped.to_netcdf('clipped.nc')
-    
-    for t in range(clipped['time'].size):
-    
-        # Neem alle waardes behalve die die gelijk zijn aan de constante
-        whered = clipped[{'time':t}].where(clipped<1e+30)
+    if args.output != '':
+        clipped.to_netcdf(args.output)
+    if not args.single:
+        for t in range(clipped['time'].size):
         
-        # Waardes om op te slaan:
-        # Gemiddeldes
-        meaned = whered.mean()
-        cloudfrac = meaned['cloud_fraction'].item()
-        no2 = meaned['tropospheric_NO2_column_number_density'].item()
-        # Aantal vakjes binnen het land
-        counted = whered.count()['cloud_fraction'].item()
-        # Aantal vakjes totaal
-        origcounted = clipped[{'time':t}].count()['cloud_fraction'].item()
-        # Meettijd/processingtijd
-        creation = clipped[{'time':t}].time.item().isoformat()
-        # Tijdstip klaar met analyse, i.e. nu
-        timeanalysisdone = datetime.datetime.now().isoformat()
-        # Naam van het satellietdatabestand
+            # Neem alle waardes behalve die die gelijk zijn aan de constante
+            whered = clipped[{'time':t}].where(clipped<1e+30)
+            
+            # Waardes om op te slaan:
+            # Gemiddeldes
+            meaned = whered.mean()
+            cloudfrac = meaned['cloud_fraction'].item()
+            no2 = meaned['tropospheric_NO2_column_number_density'].item()
+            # Aantal vakjes binnen het land
+            counted = whered.count()['cloud_fraction'].item()
+            # Aantal vakjes totaal
+            origcounted = clipped[{'time':t}].count()['cloud_fraction'].item()
+            # Meettijd/processingtijd
+            creation = clipped[{'time':t}].time.item().isoformat()
+            # Tijdstip klaar met analyse, i.e. nu
+            timeanalysisdone = datetime.datetime.now().isoformat()
+            # Naam van het satellietdatabestand
+            rastername = args.raster
+            # Naam van het topografiebestand (met landnaam erin)
+            shapefilename = args.shapefile
+            
+            print(rastername,shapefilename,creation,timeanalysisdone,counted,origcounted,cloudfrac,no2)
+            #f.write("rastername,shapefilename,creation,timeanalysisdone,counted,origcounted,cloudfrac,no2\n")
+            with open('analysis.csv','a') as f:
+                f.write(f'{rastername},{shapefilename},{creation},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2}\n')
+    else:
+        whered = clipped['tropospheric_NO2_column_number_density'].where(clipped['tropospheric_NO2_column_number_density']<1e+30)
+        starttime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_start']*60*60*24+915235200).isoformat()
+        stoptime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_stop']*60*60*24+915235200).isoformat()
+        no2 = whered.mean().item()
         rastername = args.raster
-        # Naam van het topografiebestand (met landnaam erin)
         shapefilename = args.shapefile
         
-        print(rastername,shapefilename,creation,timeanalysisdone,counted,origcounted,cloudfrac,no2)
-        #f.write("rastername,shapefilename,creation,timeanalysisdone,counted,origcounted,cloudfrac,no2\n")
-        with open('analysis.csv','a') as f:
-            f.write(f'{rastername},{shapefilename},{creation},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2}\n')
-    
+        with open('fnanalysis.csv','a') as f:
+            f.write(f'{rastername},{shapefilename},{starttime},{stoptime},{no2}\n')
+        
