@@ -7,3 +7,4 @@ __pycache__/analyse.cpython-310.pyc
 *.crdownload
 *.bat
 *.bak
+*.ini
