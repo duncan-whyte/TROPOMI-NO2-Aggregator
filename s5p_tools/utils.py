@@ -1,3 +1,5 @@
+# See request.py for attribution & license
+
 import harp
 import numpy as np
 from os.path import exists

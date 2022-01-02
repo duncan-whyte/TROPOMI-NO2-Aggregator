@@ -1,3 +1,5 @@
+# Partially from request.py
+
 import argparse
 from functools import partial
 from os import makedirs
