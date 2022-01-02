@@ -9,7 +9,7 @@ from pathlib import Path
 from tqdm import tqdm
 from os.path import exists
 import datetime
-from s5p_tools import (
+from utils import (
     compute_lengths_and_offsets,
     fetch_product,
     generate_harp_commands,

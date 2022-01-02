@@ -42,7 +42,7 @@ import xarray as xr
 import netCDF4 as nc
 import urllib.parse
 
-from s5p_tools import (
+from utils import (
     compute_lengths_and_offsets,
     fetch_product,
     generate_harp_commands,

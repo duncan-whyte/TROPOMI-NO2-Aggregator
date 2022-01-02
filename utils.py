@@ -1,5 +1,7 @@
 # See request.py for attribution & license
 
+from pathlib import Path
+
 import harp
 import numpy as np
 from os.path import exists
@@ -9,6 +11,16 @@ from sentinelsat.sentinel import (
     SentinelAPIError,
 )
 from tqdm import tqdm
+
+DHUS_USER = "s5pguest"
+DHUS_PASSWORD = "s5pguest"
+DHUS_URL = "https://s5phub.copernicus.eu/dhus"
+
+DOWNLOAD_DIR = Path("L2_data")
+EXPORT_DIR = Path("L3_data")
+HARPED_DIR = Path("HARP_L3")
+PROCESSED_DIR = Path("processed")
+
 
 
 def compute_lengths_and_offsets(minx, miny, maxx, maxy, ystep, xstep):
