@@ -5,7 +5,7 @@ This repo includes three separate processes:
 #### `request.py`
 `request.py` retrieves into `L2_data/` and reduces into `L3_data/` the resolution of all `.nc` files covering a certain area (`aoi`, as `.geojson`) in a certain
 timeframe (`[--date yyyyMMdd yyyyMMdd]`). With the `-l`/`--links` flag the program quits after printing the URLs. The `-s`/`--skip` flag starts reducing already
-downloaded files without downloading missing files. Part of this code is courtesy of Bilel Omrani's [`s5p-analysis`](https://github.com/bilelomrani1/s5p-analysis), under an MIT license found in that file.
+downloaded files without downloading missing files. Part of this code is courtesy of Bilel Omrani's [`s5p-analysis`](https://github.com/bilelomrani1/s5p-analysis), under an MIT license found in this file.
 
 
 #### `process.py`
