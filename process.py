@@ -52,7 +52,7 @@ def processL3(filenames, chunk_size):
             ),
         decode_times=False,
         chunks={"time": chunk_size},
-    )[['cloud_fraction', 'tropospheric_NO2_column_number_density']] # todo remove
+    )[['cloud_fraction', 'tropospheric_NO2_column_number_density']]
     DS = DS.sortby("time")
     DS.rio.write_crs("epsg:4326", inplace=True)
     DS.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)

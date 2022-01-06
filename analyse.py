@@ -81,7 +81,7 @@ if __name__ == '__main__': # main
             print(rastername,shapefilename,creation,timeanalysisdone,counted,origcounted,cloudfrac,no2)
             #f.write("rastername,shapefilename,creation,timeanalysisdone,counted,origcounted,cloudfrac,no2\n")
             with open('analysis.csv','a') as f:
-                f.write(f'{rastername},{shapefilename},{creation},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2}\n')
+                f.write(f'{rastername},{shapefilename},{creation},{timeanalysisdone},{counted},{origcounted},{cloudfrac},{no2*1e6}\n')
     else:
         whered = clipped['tropospheric_NO2_column_number_density'].where(clipped['tropospheric_NO2_column_number_density']<1e+30)
         starttime = datetime.datetime.utcfromtimestamp(clipped.attrs['datetime_start']*60*60*24+946684800).isoformat()
