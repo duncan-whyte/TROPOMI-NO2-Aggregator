@@ -4,7 +4,6 @@ import pandas as pd
 from itertools import product, cycle
 import argparse
 from pathlib import Path
-import s5prequest as s5pr
 from os import cpu_count
 import rioxarray
 import geopandas
